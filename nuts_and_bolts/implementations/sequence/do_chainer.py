@@ -5,7 +5,8 @@ import chainer.links as L
 import chainer.functions as F
 import sys
 
-sys.path.append("../data/sequence")
+sys.path.append("../../data/sequence")
+
 
 from sequence import get_data
 
