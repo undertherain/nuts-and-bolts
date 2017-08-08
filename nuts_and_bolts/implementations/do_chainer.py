@@ -3,7 +3,11 @@ import begin
 import chainer
 import chainer.links as L
 import chainer.functions as F
-from ...data import get_data
+import sys
+
+sys.path.append("../data/sequence")
+
+from sequence import get_data
 
 
 init = chainer.initializers.HeUniform(scale=1.0, dtype=None)
@@ -16,8 +20,8 @@ class RNN(chainer.Chain):
             l2=L.LSTM(None, 16),  # the first LSTM layer
             out=L.Linear(None, 1),  # the feed-forward output layer
         )
-        for param in self.params():
-            param.data[...] = np.random.uniform(-0.1, 0.1, param.data.shape)
+        # for param in self.params():
+            # param.data[...] = np.random.uniform(-0.1, 0.1, param.data.shape)
         self.train = True
 
     def reset_state(self):
