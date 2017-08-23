@@ -4,6 +4,7 @@ import chainer
 import chainer.links as L
 import chainer.functions as F
 import sys
+from matplotlib import pyplot as plt
 
 sys.path.append("../../data/sequence")
 
@@ -38,22 +39,39 @@ class RNN(chainer.Chain):
         return h
 
 
+def train_seq(net, data):
+    net.reset_state()
+    net.cleargrads()
+    for col in range(data.shape[1]):
+        prediction = net(data[:, col, :])
+    return prediction
+
+
 @begin.start
 def main():
     X, Y = get_data()
     rnn = RNN()
-    print ("hi")
+    print ("x shape:", X.shape)
+    print ("y shape:", Y.shape)
 #    optimizer = chainer.optimizers.SGD(lr=0.1)
-    optimizer = chainer.optimizers.NesterovAG(lr=0.1, momentum=0.95)
+    optimizer = chainer.optimizers.NesterovAG(lr=0.01, momentum=0.95)
     optimizer.setup(rnn)
-    nb_epoch = 20
+    nb_epoch = 16
     for i in range(nb_epoch):
-        rnn.reset_state()
-        rnn.cleargrads()
-        for col in range(X.shape[1]):
-            prediction = rnn(X[:, col, :])
-        loss = F.mean_squared_error(prediction[:, 0], Y)
-        loss.backward()
-        optimizer.update()
-        if i % 2 == 0:
-            print (loss.data)
+        for j in range(X.shape[0]):
+            prediction = train_seq(rnn, X[j: j + 1])
+            loss = F.mean_squared_error(prediction[:, 0], Y[j:j+1   ])
+            loss.backward()
+            optimizer.update()
+        print (loss.data)
+
+    rnn.reset_state()
+    rnn.cleargrads()
+    generated = []
+    prefix = X[0:1]
+    for i in range(100):
+        pred = train_seq(rnn, prefix)
+        generated.append(pred.data[0, 0])
+        prefix = np.vstack([prefix[0], pred.data])[np.newaxis, 1:, :]
+    plt.plot(np.arange(len(generated)), generated)
+    plt.savefig("result_chainer.png")
