@@ -13,10 +13,12 @@ from dagen.image.image import get_ds_simple
 params = {}
 params["batch_size"] = 8
 X_train, Y_train = get_ds_simple(cnt_samples=1000)
-X_train = X_train.astype(np.float32)[:,np.newaxis]
+#X_train = X_train.astype(np.float32)[:,np.newaxis]
+X_train = np.expand_dims(X_train, axis=1).astype(np.float32) / 255
 Y_train = Y_train[:,np.newaxis]
 print(X_train.shape)
 print(Y_train.shape)
+
 
 
 class Net(chainer.Chain):
@@ -25,7 +27,8 @@ class Net(chainer.Chain):
         super(Net, self).__init__(
             conv1=L.Convolution2D(1, 32, 2), #Convolution2D(in_channels, out_channels, ksize, stride=1, pad=0, wscale=1, bias=0, nobias=False, use_cudnn=True, initialW=None, initial_bias=None, deterministic=False)
             conv2=L.Convolution2D(None, 32, 2),
-            l1=L.Linear(None, 1)
+            l1=L.Linear(None, 10),
+            l2=L.Linear(None, 1)
         )
         self.train = train
 
@@ -33,7 +36,9 @@ class Net(chainer.Chain):
         h = x
         h = F.relu(self.conv1(h))
         h = F.relu(self.conv2(h))
-        return self.l1(h)
+        h = F.relu(self.l1(h))
+        h = self.l2(h)
+        return h
 
 class Classifier(chainer.Chain):
     def __init__(self, predictor):
