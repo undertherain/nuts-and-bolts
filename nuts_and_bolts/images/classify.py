@@ -9,9 +9,11 @@ import dagen
 import dagen.image
 from dagen.image.image import get_ds_simple
 
+from trainer import train
 
 params = {}
 params["batch_size"] = 8
+
 X_train, Y_train = get_ds_simple(cnt_samples=1000)
 #X_train = X_train.astype(np.float32)[:,np.newaxis]
 X_train = np.expand_dims(X_train, axis=1).astype(np.float32) / 255
@@ -53,24 +55,25 @@ class Classifier(chainer.Chain):
 
 model = Classifier(Net())
 
-def train():
-    nb_epoch = 20
-    optimizer = chainer.optimizers.Adam()
-    optimizer.setup(model)
-    train = chainer.datasets.tuple_dataset.TupleDataset(X_train, Y_train)
-    train_iter = chainer.iterators.SerialIterator(train, batch_size=params["batch_size"], repeat=True, shuffle=False)
-    updater = training.StandardUpdater(train_iter, optimizer)
-    trainer = training.Trainer(updater, (nb_epoch, 'epoch'), out='/tmp/result')
-    # trainer.extend(extensions.Evaluator(test_iter, model, device=id_device))
-    # trainer.extend(extensions.Evaluator(test_iter, model))
-    trainer.extend(extensions.LogReport())
-    trainer.extend(extensions.PrintReport(['epoch', 'main/loss', 'main/accuracy', "elapsed_time"]))
-    # trainer.extend(extensions.ProgressBar())
-    trainer.run()
+#def train():
+    #nb_epoch = 20
+    #optimizer = chainer.optimizers.Adam()
+    #optimizer.setup(model)
+    #train = chainer.datasets.tuple_dataset.TupleDataset(X_train, Y_train)
+    #train_iter = chainer.iterators.SerialIterator(train, batch_size=params["batch_size"], repeat=True, shuffle=False)
+    #updater = training.StandardUpdater(train_iter, optimizer)
+    #trainer = training.Trainer(updater, (nb_epoch, 'epoch'), out='/tmp/result')
+    ## trainer.extend(extensions.Evaluator(test_iter, model, device=id_device))
+    ## trainer.extend(extensions.Evaluator(test_iter, model))
+    #trainer.extend(extensions.LogReport())
+    #trainer.extend(extensions.PrintReport(['epoch', 'main/loss', 'main/accuracy', "elapsed_time"]))
+    ## trainer.extend(extensions.ProgressBar())
+    #trainer.run()
 
 
 def main():
-    train()
+    ds_train = chainer.datasets.tuple_dataset.TupleDataset(X_train, Y_train)
+    train(model, ds_train)
 
 
 if __name__ == "__main__":
