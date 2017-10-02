@@ -9,7 +9,7 @@ import dagen
 import dagen.image
 from dagen.image.image import get_ds_simple
 
-from trainer import train
+from .trainer import train
 
 params = {}
 params["batch_size"] = 8
