@@ -6,6 +6,7 @@ import chainer.links as L
 import dagen
 import dagen.image
 from dagen.image.image import get_ds_simple
+from dagen.image.image import merge_samples
 
 from ..trainer import train
 
@@ -23,29 +24,35 @@ class Net(chainer.Chain):
 
     def __init__(self, train=True):
         super(Net, self).__init__(
-            conv1=L.Convolution2D(None, 16, 3, pad=1),
-            conv2=L.Convolution2D(None, 16, 3, pad=1),
-            conv3=L.Convolution2D(None, 16, 3, pad=1),
-            conv4=L.Convolution2D(None, 16, 3, pad=1),
-            conv5=L.Convolution2D(None, 1, 3, pad=1),
+            conv_e_1=L.Convolution2D(None, 16, 3, pad=1),
+            conv_e_2=L.Convolution2D(None, 8, 3, pad=1),
+            conv_e_3=L.Convolution2D(None, 8, 3, pad=1),
+            conv_d_1=L.Convolution2D(None, 8, 3, pad=1),
+            conv_d_2=L.Convolution2D(None, 8, 3, pad=1),
+            conv_d_3=L.Convolution2D(None, 16, 3, pad=1),
+            conv_d_4=L.Convolution2D(None, 1, 3, pad=1),
         )
         self.train = train
 
     def encode(self, x):
         h = x
-        h = F.relu(self.conv1(h))
+        h = F.relu(self.conv_e_1(h))
         h = F.max_pooling_2d(h, 2)
-        h = F.relu(self.conv2(h))
+        h = F.relu(self.conv_e_2(h))
+        h = F.max_pooling_2d(h, 2)
+        h = F.relu(self.conv_e_3(h))
         h = F.max_pooling_2d(h, 2)
         return h
 
     def decode(self, x):
         h = x
-        h = F.relu(self.conv3(h))
+        h = F.relu(self.conv_d_1(h))
+        h = F.unpooling_2d(h, 2, outsize=(16, 16))
+        h = F.relu(self.conv_d_2(h))
         h = F.unpooling_2d(h, 2, outsize=(32, 32))
-        h = F.relu(self.conv4(h))
+        h = F.relu(self.conv_d_2(h))
         h = F.unpooling_2d(h, 2, outsize=(64, 64))
-        h = F.sigmoid(self.conv5(h))
+        h = F.sigmoid(self.conv_d_4(h))
         return h
 
     def __call__(self, x):
@@ -61,7 +68,7 @@ class Classifier(chainer.Chain):
     def __call__(self, x, t):
         y = self.predictor(x)
         loss = F.mean_squared_error(y, t)
-        #accuracy = F.binary_accuracy(y, t)
+        # accuracy = F.binary_accuracy(y, t)
         chainer.report({'loss': loss}, self)
         return loss
 
@@ -69,10 +76,24 @@ class Classifier(chainer.Chain):
 def main():
     net = Net()
     model = Classifier(net)
-    #res = net(X_train[0:1])
-    #print(res.shape)
+    # res = net(X_train[0:1])
+    # print(res.shape)
+    # generate examples before training
+    print("image size : ", X_train[:1].size)
+
+    encoded = net.encode(X_train[:1])
+    print("encoded size", encoded.size)
+
+    generated = net(X_train[:10])
+    im = merge_samples(generated.data, Y_train)
+    im.save("/tmp/ae_untrained.png")
+
     ds_train = chainer.datasets.tuple_dataset.TupleDataset(X_train, X_train)
     train(model, ds_train)
+
+    generated = net(X_train[:10])
+    im = merge_samples(generated.data, Y_train)
+    im.save("/tmp/ae_trained.png")
 
 
 if __name__ == "__main__":
