@@ -15,8 +15,10 @@ default_params = {
 }
 
 
-def train(model, train, test=None, params=default_params):
-    gpus = params["gpus"]
+def train(model, train, test=None, params={}):
+    params_local = default_params
+    params_local.update(params)
+    gpus = params_local["gpus"]
 
     if len(gpus) > 1:
         print("multiple gpus not implemented yet")
@@ -29,8 +31,8 @@ def train(model, train, test=None, params=default_params):
     optimizer = chainer.optimizers.Adam()
     optimizer.setup(model)
 
-    train_iter = iterators.SerialIterator(train, batch_size=params["batch_size"], shuffle=True)
-    test_iter = iterators.SerialIterator(test, batch_size=params["batch_size"], repeat=False, shuffle=False)
+    train_iter = iterators.SerialIterator(train, batch_size=params_local["batch_size"], shuffle=True)
+    test_iter = iterators.SerialIterator(test, batch_size=params_local["batch_size"], repeat=False, shuffle=False)
 
     if len(gpus) == 1:
         updater = training.StandardUpdater(train_iter, optimizer, device=gpus[0])
@@ -41,7 +43,7 @@ def train(model, train, test=None, params=default_params):
         #trainer = training.Trainer(updater, stop_trigger=(1, 'epoch'), out=params["path_results"])
     #else:
         #trainer = training.Trainer(updater, stop_trigger=stop_trigger, out=params["path_results"])
-    trainer = training.Trainer(updater, stop_trigger=(10, 'epoch'), out=params["path_results"])
+    trainer = training.Trainer(updater, stop_trigger=(20, 'epoch'), out=params_local["path_results"])
     #if len(gpus) == 1:
         #trainer.extend(extensions.Evaluator(test_iter, model, device=gpus[0], eval_func=model.test_eval_func))
     #else:

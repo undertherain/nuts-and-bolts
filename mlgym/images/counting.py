@@ -13,15 +13,7 @@ from mlgym.trainer import train
 dim_image=64
 
 params = {}
-params["batch_size"] = 8
-
-X_train, Y_train = get_ds_counting()
-
-
-X_train = np.expand_dims(X_train, axis=1).astype(np.float32) / 255
-#Y_train = Y_train[:, np.newaxis]
-print(X_train.shape)
-print(Y_train.shape)
+params["batch_size"] = 10
 
 class CNN(chainer.Chain):
     def __init__(self, train=True):
@@ -50,10 +42,6 @@ class CNN(chainer.Chain):
         h = F.sum(h, axis=(2, 3))
         h = self.l1(h)
         return h
-        ##return F.sigmoid(self.l1(h))
-
-
-net = CNN()
 
 
 class Model(chainer.Chain):
@@ -66,21 +54,24 @@ class Model(chainer.Chain):
         #print("t_shape:", t.shape)
         #loss = F.softmax_cross_entropy(y, t)
         loss = F.mean_absolute_error(y, t.astype(np.float32))
-        #print(loss.data)
-#        loss = F.si(y, t)
-#        accuracy = F.accuracy(y, t)
-        accuracy = 1  # todo
-        chainer.report({'loss': loss, 'accuracy': accuracy}, self)
+        chainer.report({'loss': loss}, self)
         return loss
 
 
 def main():
+    X_train, Y_train = get_ds_counting(cnt_samples=1000)
+    X_test, Y_test = get_ds_counting(cnt_samples=100)
+    X_train = np.expand_dims(X_train, axis=1).astype(np.float32) / 255
+    X_test = np.expand_dims(X_test, axis=1).astype(np.float32) / 255
     print(X_train.shape)
+    print(X_test.shape)
+    
+    net = CNN()
     model = Model(net)
 
     ds_train = chainer.datasets.tuple_dataset.TupleDataset(X_train, Y_train)
-    train(model, ds_train)
-
+    ds_test = chainer.datasets.tuple_dataset.TupleDataset(X_test, Y_test)
+    train(model, ds_train, ds_test, params)
 
 if __name__ == "__main__":
     main()
