@@ -5,34 +5,17 @@ import chainer.links as L
 
 import dagen
 import dagen.image
-from dagen.image.image import get_ds_simple
 from dagen.image.image import get_ds_counting
 import PIL
-
-
 
 from mlgym.trainer import train
 
 dim_image=64
-def display_as_images(ar):
-    a=ar[0]
-    bar=np.ones([dim_image,2])
-#    im_ar=np.hstack([np.hstack([ar[i].reshape([dim_image,dim_image]),bar]) for i in range(ar.shape[0])])
-    im_ar=np.hstack([np.hstack([ar[i],bar]) for i in range(ar.shape[0])])
-    im = PIL.Image.fromarray(im_ar*255)
-    if im.mode != 'RGB':
-        im = im.convert('RGB')
-    return im
 
 params = {}
 params["batch_size"] = 8
 
 X_train, Y_train = get_ds_counting()
-
-
-
-im = display_as_images(np.array(X_train[:10]))
-# im.show()
 
 
 X_train = np.expand_dims(X_train, axis=1).astype(np.float32) / 255
