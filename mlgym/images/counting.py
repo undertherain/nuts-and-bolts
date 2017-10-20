@@ -14,6 +14,7 @@ dim_image=64
 
 params = {}
 params["batch_size"] = 10
+params["nb_epoch"] = 100
 
 class CNN(chainer.Chain):
     def __init__(self, train=True):

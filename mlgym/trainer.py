@@ -1,17 +1,14 @@
 import chainer
 from chainer import training, iterators, serializers
 from chainer.training import extensions
-# import sys
-# sys.path.append("../dl_utils")
 # from dl_utils.frameworks.chainer.snapshot_best import snapshot_best
-# from iterator import MyIterator
-# from extentions import TestLossReport
 
 default_params = {
     "gpus": [],
     "test_run": False,
     "path_results": "/tmp/chainer",
-    "batch_size": 32
+    "batch_size": 32,
+    "nb_epoch": 10
 }
 
 
@@ -32,7 +29,6 @@ def train(model, train, test=None, params={}):
     optimizer.setup(model)
 
     train_iter = iterators.SerialIterator(train, batch_size=params_local["batch_size"], shuffle=True)
-    test_iter = iterators.SerialIterator(test, batch_size=params_local["batch_size"], repeat=False, shuffle=False)
 
     if len(gpus) == 1:
         updater = training.StandardUpdater(train_iter, optimizer, device=gpus[0])
@@ -43,7 +39,12 @@ def train(model, train, test=None, params={}):
         #trainer = training.Trainer(updater, stop_trigger=(1, 'epoch'), out=params["path_results"])
     #else:
         #trainer = training.Trainer(updater, stop_trigger=stop_trigger, out=params["path_results"])
-    trainer = training.Trainer(updater, stop_trigger=(20, 'epoch'), out=params_local["path_results"])
+    trainer = training.Trainer(updater, stop_trigger=(params_local["nb_epoch"], 'epoch'), out=params_local["path_results"])
+
+#    trainer.extend(extensions.Evaluator(test_iter, model, device=args.gpu))
+    if test is not None:
+        test_iter = iterators.SerialIterator(test, batch_size=params_local["batch_size"], repeat=False, shuffle=False)
+        trainer.extend(extensions.Evaluator(test_iter, model))
     #if len(gpus) == 1:
         #trainer.extend(extensions.Evaluator(test_iter, model, device=gpus[0], eval_func=model.test_eval_func))
     #else:

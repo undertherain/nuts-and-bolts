@@ -13,8 +13,11 @@ params = {}
 params["batch_size"] = 8
 
 X_train, Y_train = get_ds_simple(cnt_samples=1000)
+X_test, Y_test = get_ds_simple(cnt_samples=100)
 X_train = np.expand_dims(X_train, axis=1).astype(np.float32) / 255
 Y_train = Y_train[:, np.newaxis]
+X_test = np.expand_dims(X_test, axis=1).astype(np.float32) / 255
+Y_test = Y_test[:, np.newaxis]
 print(X_train.shape)
 print(Y_train.shape)
 
@@ -23,8 +26,8 @@ class Net(chainer.Chain):
 
     def __init__(self, train=True):
         super(Net, self).__init__(
-            conv1=L.Convolution2D(1, 32, 2),
-            conv2=L.Convolution2D(None, 32, 2),
+            conv1=L.Convolution2D(1, 16, 2),
+            conv2=L.Convolution2D(None, 16, 2),
             l1=L.Linear(None, 10),
             l2=L.Linear(None, 1)
         )
@@ -54,7 +57,8 @@ class Classifier(chainer.Chain):
 def main():
     model = Classifier(Net())
     ds_train = chainer.datasets.tuple_dataset.TupleDataset(X_train, Y_train)
-    train(model, ds_train)
+    ds_test = chainer.datasets.tuple_dataset.TupleDataset(X_test, Y_test)
+    train(model, ds_train, ds_test)
 
 
 if __name__ == "__main__":
