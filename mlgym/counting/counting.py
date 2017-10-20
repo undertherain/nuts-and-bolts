@@ -43,10 +43,10 @@ print(Y_train.shape)
 class CNN(chainer.Chain):
     def __init__(self, train=True):
         super(CNN, self).__init__(
-            conv1=L.Convolution2D(1, 16, 4, pad=3),
+            conv1=L.Convolution2D(1, 2, 4, pad=3),
             # Convolution2D(in_channels, out_channels, ksize, stride=1, pad=0, wscale=1, bias=0, nobias=False, use_cudnn=True, initialW=None, initial_bias=None, deterministic=False)
             # conv1=L.Convolution2D(1, 2, 4, pad=3, initialW=w, initial_bias=np.array([-4,-2], dtype=np.float32)) ,
-            conv2=L.Convolution2D(None, 2, 3, pad=2),
+            # conv2=L.Convolution2D(None, 2, 3, pad=2),
             # conv3=L.Convolution2D(None, 2, 3, pad=2),
             # l1=L.Linear(None, 2, initialW=np.array([[0,0.26],[1,0]],dtype=np.float32)),
             l1=L.Linear(None, 2),
@@ -57,7 +57,7 @@ class CNN(chainer.Chain):
         h = x
         # h = F.relu(self.conv1(h))
         h = F.leaky_relu(self.conv1(h))
-        h = F.leaky_relu(self.conv2(h))
+        # h = F.leaky_relu(self.conv2(h))
         # h = F.max_pooling_2d(h, 2)
         # h = F.relu(self.conv3(h))
         return h
@@ -92,6 +92,7 @@ class Model(chainer.Chain):
 
 
 def main():
+    print(X_train.shape)
     model = Model(net)
 
     ds_train = chainer.datasets.tuple_dataset.TupleDataset(X_train, Y_train)
