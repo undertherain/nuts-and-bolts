@@ -50,7 +50,7 @@ class Net(chainer.Chain):
         h = F.unpooling_2d(h, 2, outsize=(16, 16))
         h = F.relu(self.conv_d_2(h))
         h = F.unpooling_2d(h, 2, outsize=(32, 32))
-        h = F.relu(self.conv_d_2(h))
+        h = F.relu(self.conv_d_3(h))
         h = F.unpooling_2d(h, 2, outsize=(64, 64))
         h = F.sigmoid(self.conv_d_4(h))
         return h
