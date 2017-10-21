@@ -10,7 +10,7 @@ from dagen.image.image import merge_samples
 
 from ..trainer import train
 
-params = {}
+params = {"nb_epoch" : 20 }
 params["batch_size"] = 8
 
 X_train, Y_train = get_ds_simple(cnt_samples=1000)
@@ -73,6 +73,15 @@ class Classifier(chainer.Chain):
         return loss
 
 
+
+def make_noise(X):
+    for idx,_ in enumerate(X):
+        noise = np.random.rand(64,64)
+        X[idx,:,:,:] *= noise
+        X[idx,:,:,:] += noise
+
+    return X
+
 def main():
     net = Net()
     model = Classifier(net)
@@ -80,6 +89,12 @@ def main():
     # print(res.shape)
     # generate examples before training
     print("image size : ", X_train[:1].size)
+    im = merge_samples(X_train[:10], Y_train[:10])
+    im.save("/tmp/ae_original.png")
+
+    noisy_X = make_noise(X_train[:10])
+    im = merge_samples(noisy_X, Y_train[:10])
+    im.save("/tmp/noisy.png")
 
     encoded = net.encode(X_train[:1])
     print("encoded size", encoded.size)
@@ -94,6 +109,10 @@ def main():
     generated = net(X_train[:10])
     im = merge_samples(generated.data, Y_train)
     im.save("/tmp/ae_trained.png")
+
+    denoised = net(noisy_X)
+    im = merge_samples(denoised.data, Y_train[:10])
+    im.save("/tmp/denoised.png")
 
 
 if __name__ == "__main__":
