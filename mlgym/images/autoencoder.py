@@ -11,7 +11,7 @@ from dagen.image.image import merge_samples
 from ..trainer import train
 
 params = {"nb_epoch" : 20 }
-params["batch_size"] = 8
+params["batch_size"] = 2
 
 X_train, Y_train = get_ds_simple(cnt_samples=1000)
 X_train = np.expand_dims(X_train, axis=1).astype(np.float32) / 255
@@ -24,14 +24,16 @@ class Net(chainer.Chain):
 
     def __init__(self, train=True):
         super(Net, self).__init__(
-            conv_e_1=L.Convolution2D(None, 16, 4, pad=1),
-            conv_e_2=L.Convolution2D(None, 16, 4, pad=1),
-            conv_e_3=L.Convolution2D(None, 16, 4, pad=1),
-            conv_d_1=L.Convolution2D(None, 8, 3, pad=1),
-            conv_d_2=L.Convolution2D(None, 8, 3, pad=1),
-            conv_d_3=L.Convolution2D(None, 16, 3, pad=1),
-            conv_d_4=L.Convolution2D(None, 1, 3, pad=1),
-        )
+            conv_e_1=L.Convolution2D(None, 32, 3, pad=1),
+            conv_e_2=L.Convolution2D(None, 32, 3, pad=1),
+            conv_e_3=L.Convolution2D(None, 32, 3, pad=1),
+            conv_d_1=L.Convolution2D(None, 32, 3, pad=1),
+            conv_d_2=L.Convolution2D(None, 32, 3, pad=1),
+            conv_d_3=L.Convolution2D(None, 32, 3, pad=1),
+            conv_d_4=L.Convolution2D(None, 1, 3 , pad=1),
+            dc1 = L.Deconvolution2D(in_channels=None, out_channels=32, ksize=2, stride=2, pad=0 ),
+            dc2 = L.Deconvolution2D(in_channels=None, out_channels=16, ksize=2, stride=2, pad=0),
+            dc3 = L.Deconvolution2D(in_channels=None, out_channels=1, ksize=2, stride=2, pad=0)        )
         self.train = train
 
     def encode(self, x):
@@ -46,13 +48,18 @@ class Net(chainer.Chain):
 
     def decode(self, x):
         h = x
-        h = F.relu(self.conv_d_1(h))
-        h = F.unpooling_2d(h, 2, outsize=(16, 16))
-        h = F.relu(self.conv_d_2(h))
-        h = F.unpooling_2d(h, 2, outsize=(32, 32))
-        h = F.relu(self.conv_d_3(h))
-        h = F.unpooling_2d(h, 2, outsize=(64, 64))
-        h = F.sigmoid(self.conv_d_4(h))
+        h = self.dc1(h)
+        h = F.relu(h)
+        h = self.dc2(h)
+        h = F.relu(h)
+        h = self.dc3(h)
+        h = F.sigmoid(h)        #h = F.relu(self.conv_d_1(h))
+        #h = F.unpooling_2d(h, 2, outsize=(16, 16))
+        #h = F.relu(self.conv_d_2(h))
+        #h = F.unpooling_2d(h, 2, outsize=(32, 32))
+        #h = F.relu(self.conv_d_3(h))
+        #h = F.unpooling_2d(h, 2, outsize=(64, 64))
+        #h = F.sigmoid(self.conv_d_4(h))
         return h
 
     def __call__(self, x):

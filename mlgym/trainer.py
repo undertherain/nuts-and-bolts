@@ -7,7 +7,7 @@ default_params = {
     "gpus": [],
     "test_run": False,
     "path_results": "/tmp/chainer",
-    "batch_size": 32,
+    "batch_size": 8,
     "nb_epoch": 10
 }
 
