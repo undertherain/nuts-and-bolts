@@ -73,14 +73,14 @@ class Classifier(chainer.Chain):
         return loss
 
 
-
 def make_noise(X):
-    for idx,_ in enumerate(X):
-        noise = np.random.rand(64,64)
-        X[idx,:,:,:] *= noise
-        X[idx,:,:,:] += noise
+    for idx, _ in enumerate(X):
+        noise = np.random.rand(64, 64)
+        X[idx, :, :, :] *= noise
+        X[idx, :, :, :] += noise
 
     return X
+
 
 def main():
     net = Net()
