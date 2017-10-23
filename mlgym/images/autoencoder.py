@@ -24,9 +24,9 @@ class Net(chainer.Chain):
 
     def __init__(self, train=True):
         super(Net, self).__init__(
-            conv_e_1=L.Convolution2D(None, 16, 3, pad=1),
-            conv_e_2=L.Convolution2D(None, 8, 3, pad=1),
-            conv_e_3=L.Convolution2D(None, 8, 3, pad=1),
+            conv_e_1=L.Convolution2D(None, 16, 4, pad=1),
+            conv_e_2=L.Convolution2D(None, 16, 4, pad=1),
+            conv_e_3=L.Convolution2D(None, 16, 4, pad=1),
             conv_d_1=L.Convolution2D(None, 8, 3, pad=1),
             conv_d_2=L.Convolution2D(None, 8, 3, pad=1),
             conv_d_3=L.Convolution2D(None, 16, 3, pad=1),
@@ -111,6 +111,7 @@ def main():
     im.save("/tmp/ae_trained.png")
 
     denoised = net(noisy_X)
+    print(denoised.data.min(),denoised.data.max(),denoised.data.mean())
     im = merge_samples(denoised.data, Y_train[:10])
     im.save("/tmp/denoised.png")
 
