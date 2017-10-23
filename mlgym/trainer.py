@@ -8,7 +8,7 @@ default_params = {
     "test_run": False,
     "path_results": "/tmp/chainer",
     "batch_size": 8,
-    "nb_epoch": 10
+    "nb_epoch": 100
 }
 
 
