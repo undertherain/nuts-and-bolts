@@ -8,7 +8,7 @@ default_params = {
     "test_run": False,
     "path_results": "/tmp/chainer",
     "batch_size": 8,
-    "nb_epoch": 100
+    "nb_epoch": 10
 }
 
 
@@ -16,6 +16,7 @@ def train(model, train, test=None, params={}):
     params_local = default_params
     params_local.update(params)
     gpus = params_local["gpus"]
+    print("GPUs ", gpus)
 
     if len(gpus) > 1:
         print("multiple gpus not implemented yet")
@@ -44,7 +45,11 @@ def train(model, train, test=None, params={}):
 #    trainer.extend(extensions.Evaluator(test_iter, model, device=args.gpu))
     if test is not None:
         test_iter = iterators.SerialIterator(test, batch_size=params_local["batch_size"], repeat=False, shuffle=False)
-        trainer.extend(extensions.Evaluator(test_iter, model))
+        if len(gpus) == 1:
+            trainer.extend(extensions.Evaluator(test_iter, model))
+        else:
+            trainer.extend(extensions.Evaluator(test_iter, model, device=gpus[0]))
+
     #if len(gpus) == 1:
         #trainer.extend(extensions.Evaluator(test_iter, model, device=gpus[0], eval_func=model.test_eval_func))
     #else:

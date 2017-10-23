@@ -10,8 +10,10 @@ from dagen.image.image import merge_samples
 
 from ..trainer import train
 
-params = {"nb_epoch" : 20 }
-params["batch_size"] = 2
+params = {"nb_epoch" : 100 }
+params["batch_size"] = 8
+params["gpus"] = [0]
+
 
 X_train, Y_train = get_ds_simple(cnt_samples=1000)
 X_train = np.expand_dims(X_train, axis=1).astype(np.float32) / 255
@@ -111,7 +113,14 @@ def main():
     im.save("/tmp/ae_untrained.png")
 
     ds_train = chainer.datasets.tuple_dataset.TupleDataset(noisy_X, X_train)
-    train(model, ds_train)
+    if len(params["gpus"]) > 0:
+        chainer.cuda.get_device(0).use()
+        model.to_gpu()
+
+    train(model, ds_train, None, params)
+
+    if len(params["gpus"]) > 0:
+        model.to_cpu()
 
     generated = net(X_train[:10])
     im = merge_samples(generated.data, Y_train)
