@@ -92,7 +92,7 @@ def main():
     im = merge_samples(X_train[:10], Y_train[:10])
     im.save("/tmp/ae_original.png")
 
-    noisy_X = make_noise(X_train[:10])
+    noisy_X = make_noise(X_train)
     im = merge_samples(noisy_X, Y_train[:10])
     im.save("/tmp/noisy.png")
 
@@ -103,7 +103,7 @@ def main():
     im = merge_samples(generated.data, Y_train)
     im.save("/tmp/ae_untrained.png")
 
-    ds_train = chainer.datasets.tuple_dataset.TupleDataset(X_train, X_train)
+    ds_train = chainer.datasets.tuple_dataset.TupleDataset(noisy_X, X_train)
     train(model, ds_train)
 
     generated = net(X_train[:10])
