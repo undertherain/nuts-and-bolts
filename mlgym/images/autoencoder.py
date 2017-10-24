@@ -10,16 +10,14 @@ from dagen.image.image import merge_samples
 
 from ..trainer import train
 
-params = {"nb_epoch" : 100 }
+params = {"nb_epoch" : 10 }
 params["batch_size"] = 8
 params["gpus"] = [0]
 
 
-X_train, Y_train = get_ds_simple(cnt_samples=1000)
+X_train, Y_train = get_ds_simple(dim_image=32, cnt_samples=1000)
 X_train = np.expand_dims(X_train, axis=1).astype(np.float32) / 255
-Y_train = Y_train[:, np.newaxis]
 print(X_train.shape)
-print(Y_train.shape)
 
 
 class Net(chainer.Chain):
@@ -33,9 +31,10 @@ class Net(chainer.Chain):
             conv_d_2=L.Convolution2D(None, 32, 3, pad=1),
             conv_d_3=L.Convolution2D(None, 32, 3, pad=1),
             conv_d_4=L.Convolution2D(None, 1, 3 , pad=1),
-            dc1 = L.Deconvolution2D(in_channels=None, out_channels=32, ksize=2, stride=2, pad=0 ),
-            dc2 = L.Deconvolution2D(in_channels=None, out_channels=16, ksize=2, stride=2, pad=0),
-            dc3 = L.Deconvolution2D(in_channels=None, out_channels=1, ksize=2, stride=2, pad=0)        )
+            # dc1 = L.Deconvolution2D(in_channels=None, out_channels=32, ksize=2, stride=2, pad=0 ),
+            # dc2 = L.Deconvolution2D(in_channels=None, out_channels=16, ksize=2, stride=2, pad=0),
+            # dc3 = L.Deconvolution2D(in_channels=None, out_channels=1, ksize=2, stride=2, pad=0)        
+            )
         self.train = train
 
     def encode(self, x):
@@ -50,18 +49,19 @@ class Net(chainer.Chain):
 
     def decode(self, x):
         h = x
-        h = self.dc1(h)
-        h = F.relu(h)
-        h = self.dc2(h)
-        h = F.relu(h)
-        h = self.dc3(h)
-        h = F.sigmoid(h)        #h = F.relu(self.conv_d_1(h))
-        #h = F.unpooling_2d(h, 2, outsize=(16, 16))
-        #h = F.relu(self.conv_d_2(h))
-        #h = F.unpooling_2d(h, 2, outsize=(32, 32))
-        #h = F.relu(self.conv_d_3(h))
-        #h = F.unpooling_2d(h, 2, outsize=(64, 64))
-        #h = F.sigmoid(self.conv_d_4(h))
+        #h = self.dc1(h)
+        #h = F.relu(h)
+        #h = self.dc2(h)
+        #h = F.relu(h)
+        #h = self.dc3(h)
+        #h = F.sigmoid(h)
+        h = F.relu(self.conv_d_1(h))
+        h = F.unpooling_2d(h, 2, outsize=(8, 8))
+        h = F.relu(self.conv_d_2(h))
+        h = F.unpooling_2d(h, 2, outsize=(16, 16))
+        h = F.relu(self.conv_d_3(h))
+        h = F.unpooling_2d(h, 2, outsize=(32, 32))
+        h = F.sigmoid(self.conv_d_4(h))
         return h
 
     def __call__(self, x):
@@ -77,18 +77,20 @@ class Classifier(chainer.Chain):
     def __call__(self, x, t):
         y = self.predictor(x)
         loss = F.mean_squared_error(y, t)
+        #loss = F.sigmoid_cross_entropy(y, t)
         # accuracy = F.binary_accuracy(y, t)
         chainer.report({'loss': loss}, self)
         return loss
 
 
 def make_noise(X):
-    for idx, _ in enumerate(X):
-        noise = np.random.rand(64, 64)
-        X[idx, :, :, :] *= noise
-        X[idx, :, :, :] += noise
+    result = X.copy()
+    for idx, _ in enumerate(result):
+        noise = np.random.rand(32, 32)
+        # X[idx, :, :, :] *= noise
+        result[idx, :, :, :] += noise
 
-    return X
+    return result
 
 
 def main():
@@ -99,18 +101,18 @@ def main():
     # generate examples before training
     print("image size : ", X_train[:1].size)
     im = merge_samples(X_train[:10], Y_train[:10])
-    im.save("/tmp/ae_original.png")
+    im.save("/tmp/ae_0_original.png")
 
     noisy_X = make_noise(X_train)
     im = merge_samples(noisy_X, Y_train[:10])
-    im.save("/tmp/noisy.png")
+    im.save("/tmp/ae_1_noisy_input.png")
 
     encoded = net.encode(X_train[:1])
-    print("encoded size", encoded.size)
+    print("encoded size", encoded.shape)
 
     generated = net(X_train[:10])
     im = merge_samples(generated.data, Y_train)
-    im.save("/tmp/ae_untrained.png")
+    im.save("/tmp/ae_2_untrained.png")
 
     ds_train = chainer.datasets.tuple_dataset.TupleDataset(noisy_X, X_train)
     if len(params["gpus"]) > 0:
@@ -122,15 +124,14 @@ def main():
     if len(params["gpus"]) > 0:
         model.to_cpu()
 
-    generated = net(X_train[:10])
-    im = merge_samples(generated.data, Y_train)
-    im.save("/tmp/ae_trained.png")
+    decoded = net(X_train[:10])
+    im = merge_samples(decoded.data, Y_train[:10])
+    im.save("/tmp/ae_3_trained.png")
 
-    denoised = net(noisy_X)
-    print(denoised.data.min(),denoised.data.max(),denoised.data.mean())
+    denoised = net(noisy_X[:10])
+    print(denoised.data.min(), denoised.data.max(), denoised.data.mean())
     im = merge_samples(denoised.data, Y_train[:10])
-    im.save("/tmp/denoised.png")
-
+    im.save("/tmp/ae_4_trained_denoised.png")
 
 if __name__ == "__main__":
     main()
