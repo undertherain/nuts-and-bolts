@@ -2,13 +2,14 @@
 
 import torch
 from torch.nn import LSTM, Linear
-from torch.nn.functional import cross_entropy
+from torch.nn.functional import cross_entropy, one_hot
 from torch.optim import SGD
 
 input_seq = [0, 0, 0, 1, 1, 1] * 1000
 input_seq[:10], input_seq[-10:]
 
 seq_len = 8
+num_tokens = 2
 
 
 class BinaryPredictor(torch.nn.Module):
@@ -27,7 +28,7 @@ class BinaryPredictor(torch.nn.Module):
             num_layers,
             bidirectional=(num_directions == 2),
         )
-        self.linear = Linear(hidden_size, 2)
+        self.linear = Linear(hidden_size, input_size)
         self.c0 = torch.zeros((num_layers * num_directions, batch, hidden_size))
         self.h0 = torch.zeros((num_layers * num_directions, batch, hidden_size))
 
@@ -42,14 +43,16 @@ class BinaryPredictor(torch.nn.Module):
         return yhat
 
 
-bin_predictor = BinaryPredictor()
+bin_predictor = BinaryPredictor(input_size=num_tokens)
 opt = SGD(bin_predictor.parameters(), lr=0.001, momentum=0.9)
 
 
 for start in range(len(input_seq) - seq_len):
     end = start + seq_len
-    window = torch.Tensor(input_seq[start:end]) - 0.5
-    window.unsqueeze_(1)
+    window = input_seq[start:end]
+    window = torch.LongTensor(window)
+    window = one_hot(window, num_classes=num_tokens)
+    window = window.float()
     window.unsqueeze_(1)
     y = torch.LongTensor([input_seq[end]])
     yhat = bin_predictor(window)  # or any other model :)
