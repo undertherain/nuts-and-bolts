@@ -34,7 +34,7 @@ class BinaryPredictor(torch.nn.Module):
     def forward(self, x):
         self.h0.detach_()
         self.c0.detach_()
-        output = self.rnn(window, (self.h0, self.c0))
+        output = self.rnn(x, (self.h0, self.c0))
         # print(output)
         output, (self.h0, self.c0) = output
         yhat = self.linear(output[-1])
